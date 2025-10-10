@@ -443,7 +443,7 @@ def animate_local_drive_allele_freq(local_file, coords_file, interval=500, title
         rec_interval_local = 0
 
     num_frames = int((rec_end - rec_start) / rec_interval_local) + 1 # +1 because range(frames) below, assumes recSitesFreq=1
-    anim = animation.FuncAnimation(fig=fig, func=update, frames=num_frames, interval=500)
+    anim = animation.FuncAnimation(fig=fig, func=update, frames=num_frames, interval=interval)
     plt.show()
     
     return anim
