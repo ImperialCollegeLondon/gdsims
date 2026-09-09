@@ -7,8 +7,6 @@
 #include "constants.h"
 
 // random number seed
-std::random_device rd;
-//std::mt19937 twister(rd());
 std::mt19937 twister(1);
 
 /**
@@ -17,7 +15,7 @@ std::mt19937 twister(1);
  */
 double random_real() 
 {
-	std::uniform_real_distribution<> dist(0.0, 1.0);
+	static std::uniform_real_distribution<double> dist(0.0, 1.0);
 	return dist(twister);
 }
 
@@ -46,14 +44,16 @@ long long int random_poisson(double lambda)
 	}
 	else if (lambda > 30) {
 		// use normal approximation	
-		std::normal_distribution<> dist(lambda, std::sqrt(lambda)); // distribution(mean, standard deviation)
-		int x = std::round(dist(twister));
+		static std::normal_distribution<double> nd;
+		nd.reset();
+		int x = std::round(nd(twister, std::normal_distribution<double>::param_type(lambda, std::sqrt(lambda))));
 		result = std::max(0, x);
 	}
 	else {
 		// sample poisson directly
-		std::poisson_distribution<> dist(lambda); // distribution(mean)
-		result = dist(twister);
+		static std::poisson_distribution<> pd;
+		pd.reset();
+		result = pd(twister, std::poisson_distribution<>::param_type(lambda));
 	}
 
 	return result;
@@ -71,8 +71,9 @@ long long int random_binomial(long long int n, double p)
 	long long int result;
 	if (n*p > 10 && n*(1 - p) > 10) {
 		// use normal approximation
-		std::normal_distribution<> dist(n*p, std::sqrt(n*p*(1 - p))); // distribution(mean, standard deviation)
-		long long int x = std::round(dist(twister));
+		static std::normal_distribution<double> nd;
+		nd.reset();
+		long long int x = std::round(nd(twister, std::normal_distribution<double>::param_type(n*p, std::sqrt(n*p*(1 - p)))));
 		if (x<0) x=0;
 		if (x>n) x=n;
 		result = x;
@@ -87,8 +88,9 @@ long long int random_binomial(long long int n, double p)
 	}
 	else {
 		// use binomial distribution directly
-		std::binomial_distribution<> dist(n, p);
-		result = dist(twister);
+		static std::binomial_distribution<> bd;
+		bd.reset();
+		result = bd(twister, std::binomial_distribution<>::param_type(n, p));
 	}
 
 	return result;
@@ -100,7 +102,7 @@ long long int random_binomial(long long int n, double p)
  * @param[in] probs vector of probabilities for each outcome
  * @return A vector of the number of successes for each outcome (in the same order as the probabilities).
  */
-std::vector<long long int> random_multinomial(long long int n, const std::vector<double>& probs) 
+void random_multinomial(long long int n, const std::vector<double>& probs, std::vector<long long int>& result)
 {
 	int num_outcomes = probs.size();
 	double sum_p = 0.0;
@@ -109,7 +111,7 @@ std::vector<long long int> random_multinomial(long long int n, const std::vector
 	}
 
 	long long int n_used = n;
-	std::vector<long long int> result(num_outcomes, 0);
+	result.assign(num_outcomes, 0);
 	for (int i=0; i < num_outcomes; ++i) {
 		if (n_used > 0) {
 			result[i] = random_binomial(n_used, probs[i] / sum_p);
@@ -121,7 +123,6 @@ std::vector<long long int> random_multinomial(long long int n, const std::vector
 		}
 	}
 
-	return result;
 }
 
 /**
@@ -130,7 +131,21 @@ std::vector<long long int> random_multinomial(long long int n, const std::vector
  * @param[in] probs array of probabilities for each outcome (each genotype).
  * @return A vector of the number of successes for each outcome (in the same order as the probabilities).
  */
-std::vector<long long int> random_multinomial(long long int n, const std::array<long long int, constants::num_gen>& probs) 
+std::vector<long long int> random_multinomial(long long int n, const std::vector<double>& probs)
+{
+	std::vector<long long int> result;
+	random_multinomial(n, probs, result);
+	return result;
+}
+
+/**
+ * Returns a vector of outcomes from a random draw of the Multinomial distribution with N trials where each trial has a vector of probabilities probs.  
+ * @param[in] n 	number of trials
+ * @param[in] probs array of probabilities for each outcome (each genotype).
+ * @param[out] result the number of successes for each outcome (in the same order as the probabilities).
+ */
+void random_multinomial(long long int n, const std::array<long long int, constants::num_gen>& probs,
+ std::array<long long int, constants::num_gen>& result)
 {
 	int num_outcomes = probs.size();
 	double sum_p = 0.0;
@@ -139,7 +154,7 @@ std::vector<long long int> random_multinomial(long long int n, const std::array<
 	}
 
 	long long int n_used = n;
-	std::vector<long long int> result(num_outcomes, 0);
+	result.fill(0);
 	for (int i=0; i < num_outcomes; ++i) {
 		if (n_used > 0) {
 			result[i] = random_binomial(n_used, probs[i] / sum_p);
@@ -151,7 +166,6 @@ std::vector<long long int> random_multinomial(long long int n, const std::array<
 		}
 	}
 
-	return result;
 }
 
 /**
@@ -160,7 +174,21 @@ std::vector<long long int> random_multinomial(long long int n, const std::array<
  * @param[in] probs array of probabilities for each outcome (each age group)
  * @return A vector of the number of successes for each outcome (in the same order as the probabilities).
  */
-std::vector<long long int> random_multinomial(long long int n, const std::array<double, constants::max_dev+1>& probs) 
+std::vector<long long int> random_multinomial(long long int n, const std::array<long long int, constants::num_gen>& probs)
+{
+	std::array<long long int, constants::num_gen> stack_result;
+	random_multinomial(n, probs, stack_result);
+	return std::vector<long long int>(stack_result.begin(), stack_result.end());
+}
+
+/**
+ * Returns a vector of outcomes from a random draw of the Multinomial distribution with N trials where each trial has a vector of probabilities probs.
+ * @param[in] n 	number of trials
+ * @param[in] probs array of probabilities for each outcome (each age group)
+ * @param[out] result the number of successes for each outcome (in the same order as the probabilities).
+ */
+void random_multinomial(long long int n, const std::array<double, constants::max_dev+1>& probs,
+ std::array<long long int, constants::max_dev+1>& result)
 {
 	int num_outcomes = probs.size();
 	double sum_p = 0.0;
@@ -169,7 +197,7 @@ std::vector<long long int> random_multinomial(long long int n, const std::array<
 	}
 
 	long long int n_used = n;
-	std::vector<long long int> result(num_outcomes, 0);
+	result.fill(0);
 	for (int i=0; i < num_outcomes; ++i) {
 		if (n_used > 0) {
 			result[i] = random_binomial(n_used, probs[i] / sum_p);
@@ -181,7 +209,13 @@ std::vector<long long int> random_multinomial(long long int n, const std::array<
 		}
 	}
 
-	return result;
+}
+
+std::vector<long long int> random_multinomial(long long int n, const std::array<double, constants::max_dev+1>& probs)
+{
+	std::array<long long int, constants::max_dev+1> stack_result;
+	random_multinomial(n, probs, stack_result);
+	return std::vector<long long int>(stack_result.begin(), stack_result.end());
 }
 
 /**
@@ -194,6 +228,7 @@ double random_lognormal(double des_mean, double des_var)
 {
     double mean = std::log(std::pow(des_mean, 2) / std::sqrt(std::pow(des_mean, 2) + des_var));
     double var = std::log(1.0 + (des_var / std::pow(des_mean, 2)));
-    std::lognormal_distribution<> dist(mean, std::sqrt(var));
-    return dist(twister);
+    static std::lognormal_distribution<double> lnd;
+    lnd.reset();
+    return lnd(twister, std::lognormal_distribution<double>::param_type(mean, std::sqrt(var)));
 }

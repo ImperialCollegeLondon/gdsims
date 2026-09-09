@@ -314,11 +314,11 @@ void Patch::adults_die()
 void Patch::virgins_mate() 
 {
 	std::array<long long int, constants::num_gen> v;
-	std::vector<long long int> v_c;
+	std::array<long long int, constants::num_gen> v_c;
 	for (int i=0; i < constants::num_gen; ++i) {
 		v[i] = random_binomial(V[i], mate_rate); // how many V will mate
 		if (v[i] > 0) {
-			v_c = random_multinomial(v[i], M); // how many V with given genotype will carry each of the male genotypes
+			random_multinomial(v[i], M, v_c); // how many V with given genotype will carry each of the male genotypes
 			for (int j=0; j < constants::num_gen; j++) {
 				F[i][j] += v_c[j];
 			}
@@ -339,14 +339,14 @@ void Patch::virgins_mate()
 void Patch::lay_eggs(const std::array<std::array<std::array <double, constants::num_gen>, constants::num_gen>, constants::num_gen> &inher_fraction,
  const std::array<double, constants::max_dev+1> &dev_duration_probs)
 {
-	std::vector<long long int> j_new;
+	std::array<long long int, constants::max_dev+1> j_new;
 	for (int i=0; i < constants::num_gen; ++i) {
 		for (int j=0; j < constants::num_gen; ++j) {
 			for (int k=0; k < constants::num_gen; ++k) {
 				double num = (params->theta) * F[i][j] * inher_fraction[i][j][k]; // expected number of eggs laid with k genotype
 				long long int eggs = random_poisson(num); // actual number of eggs laid sampled from random distribution
 
-				j_new = random_multinomial(eggs, dev_duration_probs); // number of eggs that start in each different age class (according to different juvenile development times)
+				random_multinomial(eggs, dev_duration_probs, j_new); // number of eggs that start in each different age class (according to different juvenile development times)
 				for (int t=0; t < constants::max_dev + 1; ++t) { // juveniles created with assigned remaining time to develop
 					J[k][t] += j_new[t];
 				}
