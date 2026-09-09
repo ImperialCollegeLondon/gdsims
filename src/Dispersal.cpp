@@ -42,11 +42,11 @@ Dispersal::Dispersal(DispersalParams* params, BoundaryType boundary, double side
  */
 std::vector<std::array<long long int, constants::num_gen>> Dispersal::M_dispersing_out(const std::vector<Patch*> &sites) 
 {
-	std::vector<std::array<long long int, constants::num_gen>> m_move;	
-	std::array<long long int, constants::num_gen> m;
+	std::vector<std::array<long long int, constants::num_gen>> m_move;
+	m_move.reserve(sites.size());
 	std::array<long long int, constants::num_gen> m_out;
 	for (int pat=0; pat < sites.size(); ++pat) {
-		m = sites[pat]->get_M();
+		const auto& m = sites[pat]->get_M();
 		for (int i=0; i < constants::num_gen; ++i) {
 			m_out[i] = random_binomial(m[i], disp_rate); // how many adult males will disperse from the given patch
 		}
@@ -64,11 +64,11 @@ std::vector<std::array<long long int, constants::num_gen>> Dispersal::M_dispersi
  */
 std::vector<std::array<std::array<long long int, constants::num_gen>, constants::num_gen>> Dispersal::F_dispersing_out(const std::vector<Patch*> &sites)
 {
-	std::vector<std::array<std::array<long long int, constants::num_gen>, constants::num_gen>> f_move; 
-	std::array<std::array<long long int, constants::num_gen>, constants::num_gen> f;
+	std::vector<std::array<std::array<long long int, constants::num_gen>, constants::num_gen>> f_move;
+	f_move.reserve(sites.size());
 	std::array<std::array<long long int, constants::num_gen>, constants::num_gen> f_out;
 	for (int pat=0; pat < sites.size(); ++pat) {
-		f = sites[pat]->get_F();
+		const auto& f = sites[pat]->get_F();
 		for (int i=0; i < constants::num_gen; ++i) {
 			for (int j=0; j < constants::num_gen; ++j) {
 				f_out[i][j] = random_binomial(f[i][j], disp_rate); // how many adult females will disperse from the given patch

@@ -69,7 +69,7 @@ void Record::record_coords(const std::vector<Patch*> &sites)
 	const auto default_precision{std::cout.precision()};
 	constexpr auto max_precision{std::numeric_limits<double>::digits10 + 1};
 	for (int pat=0; pat < sites.size(); pat += rec_sites_freq) {
-		auto coords = sites[pat]->get_coords();
+		const auto& coords = sites[pat]->get_coords();
 		coord_list << pat+1 << "\t" << std::setprecision(max_precision) << coords.x << "\t" << coords.y << std::endl;
 	}
 	coord_list << std::setprecision(default_precision);

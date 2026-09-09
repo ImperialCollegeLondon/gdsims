@@ -95,7 +95,7 @@ void Patch::populate(int initial_WJ, int initial_WM, int initial_WV, int initial
  * @brief Returns the coordinates of the patch. 
  * @see Point
  */
-Point Patch::get_coords() const
+const Point& Patch::get_coords() const
 {
 	return coords;
 }
@@ -103,7 +103,7 @@ Point Patch::get_coords() const
 /**
  * @brief Returns the number of adult males in the patch, divided by genotype. 
  */
-std::array<long long int, constants::num_gen> Patch::get_M() const
+const std::array<long long int, constants::num_gen>& Patch::get_M() const
 {
 	return M;
 }
@@ -111,7 +111,7 @@ std::array<long long int, constants::num_gen> Patch::get_M() const
 /**
  * @brief Returns the number of adult mated females in the patch, divided by female genotype and male sperm genotype.
  */
-std::array<std::array<long long int, constants::num_gen>, constants::num_gen> Patch::get_F() const
+const std::array<std::array<long long int, constants::num_gen>, constants::num_gen>& Patch::get_F() const
 {
 	return F;
 }

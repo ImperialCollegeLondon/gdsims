@@ -42,11 +42,10 @@ Aestivation::Aestivation(AestivationParams* params, int sites_size)
  */
 void Aestivation::hide(std::vector<Patch*> &sites) 
 {
-	std::array<std::array<long long int, constants::num_gen>, constants::num_gen> f;
 	std::array<std::array<long long int, constants::num_gen>, constants::num_gen> f_try;
 	std::array<std::array<long long int, constants::num_gen>, constants::num_gen> f_aes;
 	for (int pat=0; pat < sites.size(); ++pat) {
-		f = sites[pat]->get_F();
+		const auto& f = sites[pat]->get_F();
 		for (int i=0; i < constants::num_gen; ++i) {
 			for (int j=0; j < constants::num_gen; ++j) {
 				f_try[i][j] = random_binomial(f[i][j], psi); // number of females that attempt to go into aestivation
