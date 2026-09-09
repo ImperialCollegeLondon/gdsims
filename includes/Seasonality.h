@@ -32,6 +32,8 @@ public:
 
 private:
     double amp; /**< Amplitude of rainfall fluctuations. */ 
+    int last_day; /**< Most recent day for cached sine factor. */
+    double day_factor; /**< Cached value of 1 + amp*sin(2*pi*day/365). */
 };
 
 /**

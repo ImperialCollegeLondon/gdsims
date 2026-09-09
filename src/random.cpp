@@ -68,6 +68,10 @@ long long int random_poisson(double lambda)
  */ 
 long long int random_binomial(long long int n, double p) 
 {
+	if (n == 0 || p <= 0.0) {
+		return 0;
+	}
+
 	long long int result;
 	if (n*p > 10 && n*(1 - p) > 10) {
 		// use normal approximation
@@ -113,16 +117,17 @@ void random_multinomial(long long int n, const std::vector<double>& probs, std::
 	long long int n_used = n;
 	result.assign(num_outcomes, 0);
 	for (int i=0; i < num_outcomes; ++i) {
-		if (n_used > 0) {
-			result[i] = random_binomial(n_used, probs[i] / sum_p);
-			sum_p -= probs[i];
-			n_used -= result[i];
+		if (n_used == 0) {
+			break;
 		}
-		else {
+		if (probs[i] == 0) {
 			result[i] = 0;
+			continue;
 		}
+		result[i] = random_binomial(n_used, probs[i] / sum_p);
+		sum_p -= probs[i];
+		n_used -= result[i];
 	}
-
 }
 
 /**
@@ -156,16 +161,17 @@ void random_multinomial(long long int n, const std::array<long long int, constan
 	long long int n_used = n;
 	result.fill(0);
 	for (int i=0; i < num_outcomes; ++i) {
-		if (n_used > 0) {
-			result[i] = random_binomial(n_used, probs[i] / sum_p);
-			sum_p -= probs[i];
-			n_used -= result[i];
+		if (n_used == 0) {
+			break;
 		}
-		else {
+		if (probs[i] == 0) {
 			result[i] = 0;
+			continue;
 		}
+		result[i] = random_binomial(n_used, probs[i] / sum_p);
+		sum_p -= probs[i];
+		n_used -= result[i];
 	}
-
 }
 
 /**
@@ -199,16 +205,17 @@ void random_multinomial(long long int n, const std::array<double, constants::max
 	long long int n_used = n;
 	result.fill(0);
 	for (int i=0; i < num_outcomes; ++i) {
-		if (n_used > 0) {
-			result[i] = random_binomial(n_used, probs[i] / sum_p);
-			sum_p -= probs[i];
-			n_used -= result[i];
+		if (n_used == 0) {
+			break;
 		}
-		else {
+		if (probs[i] == 0) {
 			result[i] = 0;
+			continue;
 		}
+		result[i] = random_binomial(n_used, probs[i] / sum_p);
+		sum_p -= probs[i];
+		n_used -= result[i];
 	}
-
 }
 
 std::vector<long long int> random_multinomial(long long int n, const std::array<double, constants::max_dev+1>& probs)

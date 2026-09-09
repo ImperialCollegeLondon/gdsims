@@ -70,7 +70,7 @@ void Record::record_coords(const std::vector<Patch*> &sites)
 	constexpr auto max_precision{std::numeric_limits<double>::digits10 + 1};
 	for (int pat=0; pat < sites.size(); pat += rec_sites_freq) {
 		const auto& coords = sites[pat]->get_coords();
-		coord_list << pat+1 << "\t" << std::setprecision(max_precision) << coords.x << "\t" << coords.y << std::endl;
+		coord_list << pat+1 << "\t" << std::setprecision(max_precision) << coords.x << "\t" << coords.y << "\n";
 	}
 	coord_list << std::setprecision(default_precision);
 }
@@ -88,7 +88,7 @@ void Record::record_global(int day, const std::array<long long int, constants::n
 	for (const auto& f_gen : tot_F_gen) {
 		global_data << "\t" << f_gen;
 	}
-	global_data << std::endl;
+	global_data << "\n";
 	next_global_day += rec_interval_global;
 }
 
@@ -125,7 +125,7 @@ void Record::record_local(int day, const std::vector<Patch*> &sites)
 		for (const auto& fem_gen : sites[pat]->get_F_fem_gen()) {
 			local_data << "\t" << fem_gen;
 		}
-		local_data << std::endl;
+		local_data << "\n";
 	}
 	next_local_day += rec_interval_local;
 }

@@ -276,6 +276,10 @@ void Patch::juv_get_older()
 {
 	for (int i=0; i < constants::num_gen; ++i) {
 		for (int a=0; a < constants::max_dev; ++a) {
+			if (J[i][a+1] == 0) {
+				J[i][a] = 0;
+				continue;
+			}
 			// number of juveniles that survive aging by a day are placed into the new older age group	
 			J[i][a] = random_binomial(J[i][a+1], comp);
 		}
@@ -292,15 +296,21 @@ void Patch::adults_die()
 {
 	double mu_a = params->mu_a;
 	for (int i=0; i < constants::num_gen; ++i) {
-		long long int m = random_binomial(M[i], mu_a); // number of males that die
-		M[i] -= m;
+		if (M[i] > 0) {
+			long long int m = random_binomial(M[i], mu_a); // number of males that die
+			M[i] -= m;
+		}
 
-		long long int v = random_binomial(V[i], mu_a);
-		V[i] -= v;	
+		if (V[i] > 0) {
+			long long int v = random_binomial(V[i], mu_a);
+			V[i] -= v;
+		}
 
 		for (int j=0; j < constants::num_gen; ++j) {
-			long long int f = random_binomial(F[i][j], mu_a);
-			F[i][j] -= f;
+			if (F[i][j] > 0) {
+				long long int f = random_binomial(F[i][j], mu_a);
+				F[i][j] -= f;
+			}
 		}
 	}
 
@@ -342,7 +352,13 @@ void Patch::lay_eggs(const std::array<std::array<std::array <double, constants::
 	std::array<long long int, constants::max_dev+1> j_new;
 	for (int i=0; i < constants::num_gen; ++i) {
 		for (int j=0; j < constants::num_gen; ++j) {
+			if (F[i][j] == 0) {
+				continue;
+			}
 			for (int k=0; k < constants::num_gen; ++k) {
+				if (inher_fraction[i][j][k] == 0.0) {
+					continue;
+				}
 				double num = (params->theta) * F[i][j] * inher_fraction[i][j][k]; // expected number of eggs laid with k genotype
 				long long int eggs = random_poisson(num); // actual number of eggs laid sampled from random distribution
 
