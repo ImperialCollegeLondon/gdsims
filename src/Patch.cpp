@@ -196,7 +196,6 @@ void Patch::M_disperse_out(const std::array<long long int, constants::num_gen> &
 	for (std::size_t i = 0; i < m_out.size(); ++i) {
 		M[i] -= m_out[i];
 	}
-	update_mate();
 }
 
 /**
@@ -220,7 +219,6 @@ void Patch::F_disperse_out(const std::array<std::array<long long int, constants:
 void Patch::M_disperse_in(int gen, long long int m_in) 
 {
 	M[gen] += m_in;
-	update_mate();
 }
 
 /**
@@ -267,7 +265,6 @@ void Patch::F_wake(const std::array<std::array<long long int, constants::num_gen
 void Patch::add_driver_M(int num_driver_M) 
 {
 	M[1] += num_driver_M;
-	update_mate();
 }
 
 /**
@@ -392,10 +389,15 @@ void Patch::juv_eclose()
  */
 void Patch::update_comp()
 {
-	int d = model->get_day();
 	double alpha = model->get_alpha(alpha0);
 	long long int tot_J = calculate_tot_J();
-	comp = (1 - (params->mu_j)) * std::pow(alpha / (alpha + tot_J), params->comp_power);
+	double density_term = alpha / (alpha + tot_J);
+	if (params->comp_power == 1.0) {
+		comp = (1 - (params->mu_j)) * density_term;
+	}
+	else {
+		comp = (1 - (params->mu_j)) * std::pow(density_term, params->comp_power);
+	}
 }
 
 /**

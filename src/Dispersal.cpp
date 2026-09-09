@@ -142,6 +142,10 @@ void DistanceKernelDispersal::adults_disperse(std::vector<Patch*> &sites) {
 			}
 		}
 	}
+
+	for (auto* site : sites) {
+		site->update_mate();
+	}
 }
  
 /**
@@ -265,6 +269,10 @@ void RadialDispersal::adults_disperse(std::vector<Patch*> &sites) {
 				}
 			}
 		}
+	}
+
+	for (auto* site : sites) {
+		site->update_mate();
 	}
 }
 
