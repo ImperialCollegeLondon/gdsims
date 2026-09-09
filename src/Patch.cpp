@@ -408,11 +408,12 @@ void Patch::update_comp()
 	double alpha = model->get_alpha(alpha0);
 	long long int tot_J = calculate_tot_J();
 	double density_term = alpha / (alpha + tot_J);
+	const long double survival_factor = static_cast<long double>(1 - (params->mu_j));
 	if (params->comp_power == 1.0) {
-		comp = (1 - (params->mu_j)) * density_term;
+		comp = survival_factor * static_cast<long double>(density_term);
 	}
 	else {
-		comp = (1 - (params->mu_j)) * std::pow(density_term, params->comp_power);
+		comp = survival_factor * static_cast<long double>(std::pow(density_term, params->comp_power));
 	}
 }
 
