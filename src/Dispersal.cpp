@@ -42,11 +42,11 @@ Dispersal::Dispersal(DispersalParams* params, BoundaryType boundary, double side
  */
 std::vector<std::array<long long int, constants::num_gen>> Dispersal::M_dispersing_out(const std::vector<Patch*> &sites) 
 {
-	std::vector<std::array<long long int, constants::num_gen>> m_move;	
-	std::array<long long int, constants::num_gen> m;
+	std::vector<std::array<long long int, constants::num_gen>> m_move;
+	m_move.reserve(sites.size());
 	std::array<long long int, constants::num_gen> m_out;
 	for (int pat=0; pat < sites.size(); ++pat) {
-		m = sites[pat]->get_M();
+		const auto& m = sites[pat]->get_M();
 		for (int i=0; i < constants::num_gen; ++i) {
 			m_out[i] = random_binomial(m[i], disp_rate); // how many adult males will disperse from the given patch
 		}
@@ -64,11 +64,11 @@ std::vector<std::array<long long int, constants::num_gen>> Dispersal::M_dispersi
  */
 std::vector<std::array<std::array<long long int, constants::num_gen>, constants::num_gen>> Dispersal::F_dispersing_out(const std::vector<Patch*> &sites)
 {
-	std::vector<std::array<std::array<long long int, constants::num_gen>, constants::num_gen>> f_move; 
-	std::array<std::array<long long int, constants::num_gen>, constants::num_gen> f;
+	std::vector<std::array<std::array<long long int, constants::num_gen>, constants::num_gen>> f_move;
+	f_move.reserve(sites.size());
 	std::array<std::array<long long int, constants::num_gen>, constants::num_gen> f_out;
 	for (int pat=0; pat < sites.size(); ++pat) {
-		f = sites[pat]->get_F();
+		const auto& f = sites[pat]->get_F();
 		for (int i=0; i < constants::num_gen; ++i) {
 			for (int j=0; j < constants::num_gen; ++j) {
 				f_out[i][j] = random_binomial(f[i][j], disp_rate); // how many adult females will disperse from the given patch
@@ -124,7 +124,7 @@ void DistanceKernelDispersal::adults_disperse(std::vector<Patch*> &sites) {
 	for (int pat=0; pat < sites.size(); ++pat) {
 		for (int i=0; i < constants::num_gen; ++i) {
 			// how many males of the given patch and given genotype will disperse to each of its connected patches
-			m_disp_by_new_pat = random_multinomial(m_move[pat][i], connec_weights[pat]);
+			random_multinomial(m_move[pat][i], connec_weights[pat], m_disp_by_new_pat);
 			for (int new_pat=0; new_pat < m_disp_by_new_pat.size(); ++new_pat) { // update population numbers
 				sites[connec_indices[pat][new_pat]]->M_disperse_in(i, m_disp_by_new_pat[new_pat]);
 			}
@@ -135,12 +135,16 @@ void DistanceKernelDispersal::adults_disperse(std::vector<Patch*> &sites) {
 	for (int pat = 0; pat < sites.size(); ++pat) {
 		for (int i = 0; i < constants::num_gen; ++i) {
 			for (int j=0; j < constants::num_gen; ++j) {
-				f_disp_by_new_pat = random_multinomial(f_move[pat][i][j], connec_weights[pat]);
+				random_multinomial(f_move[pat][i][j], connec_weights[pat], f_disp_by_new_pat);
 				for (int new_pat=0; new_pat < f_disp_by_new_pat.size(); ++new_pat) {
 					sites[connec_indices[pat][new_pat]]->F_disperse_in(i, j, f_disp_by_new_pat[new_pat]);
 				}
 			}
 		}
+	}
+
+	for (auto* site : sites) {
+		site->update_mate();
 	}
 }
  
@@ -244,8 +248,8 @@ void RadialDispersal::adults_disperse(std::vector<Patch*> &sites) {
 			long long int surv_m = random_binomial(m_move[pat][i], connec_weights_sum[pat]);
 
 			// how many males of the given patch and given genotype will disperse to each of its connected patches
-			//m_disp_by_new_pat = random_multinomial(m_move[pat][i], connec_weights[pat]);
-			m_disp_by_new_pat = random_multinomial(surv_m, connec_weights[pat]);
+			//random_multinomial(m_move[pat][i], connec_weights[pat], m_disp_by_new_pat);
+			random_multinomial(surv_m, connec_weights[pat], m_disp_by_new_pat);
 			for (int new_pat=0; new_pat < m_disp_by_new_pat.size(); ++new_pat) { // update population numbers
 				sites[connec_indices[pat][new_pat]]->M_disperse_in(i, m_disp_by_new_pat[new_pat]);
 			}
@@ -258,13 +262,17 @@ void RadialDispersal::adults_disperse(std::vector<Patch*> &sites) {
 			for (int j=0; j < constants::num_gen; ++j) {
 				long long int surv_f = random_binomial(f_move[pat][i][j], connec_weights_sum[pat]);
 
-				//f_disp_by_new_pat = random_multinomial(f_move[pat][i][j], connec_weights[pat]);
-				f_disp_by_new_pat = random_multinomial(surv_f, connec_weights[pat]);
+				//random_multinomial(f_move[pat][i][j], connec_weights[pat], f_disp_by_new_pat);
+				random_multinomial(surv_f, connec_weights[pat], f_disp_by_new_pat);
 				for (int new_pat=0; new_pat < f_disp_by_new_pat.size(); ++new_pat) {
 					sites[connec_indices[pat][new_pat]]->F_disperse_in(i, j, f_disp_by_new_pat[new_pat]);
 				}
 			}
 		}
+	}
+
+	for (auto* site : sites) {
+		site->update_mate();
 	}
 }
 

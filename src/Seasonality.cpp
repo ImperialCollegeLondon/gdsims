@@ -10,6 +10,8 @@
 SineRainfall::SineRainfall(SineRainfallParams *params): Seasonality(params->alpha1) 
 {
     amp = params->amp;
+    last_day = -1;
+    day_factor = 1.0;
 }
 
 /**
@@ -25,7 +27,11 @@ SineRainfall::SineRainfall(SineRainfallParams *params): Seasonality(params->alph
  */
 double SineRainfall::alpha(int day, double alpha0)
 {
-    double alpha = alpha0 + alpha1*(1 + amp*std::sin(2 * constants::pi * day/365));
+    if (day != last_day) {
+        day_factor = 1 + amp*std::sin(2 * constants::pi * day/365);
+        last_day = day;
+    }
+    double alpha = alpha0 + alpha1*day_factor;
 	return alpha;
 }
 

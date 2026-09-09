@@ -21,9 +21,9 @@ public:
 	Patch(Model* mod, LifeParams* par, double a0, Point point);
 	void populate(int initial_WJ, int initial_WM, int initial_WV, int initial_WF);
 
-	Point get_coords() const;
-	std::array<long long int, constants::num_gen> get_M() const;
-	std::array<std::array<long long int, constants::num_gen>, constants::num_gen> get_F() const;
+	const Point& get_coords() const;
+	const std::array<long long int, constants::num_gen>& get_M() const;
+	const std::array<std::array<long long int, constants::num_gen>, constants::num_gen>& get_F() const;
 	std::array<long long int, constants::num_gen> get_F_fem_gen() const;
 
 	long long int calculate_tot_J();

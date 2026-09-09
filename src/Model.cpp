@@ -25,7 +25,7 @@ using namespace constants;
  * @param[in] coords		site coordinates vector
  */
 Model::Model(ModelParams* params, const std::array<std::array<std::array <double, constants::num_gen>, constants::num_gen>, constants::num_gen> &inher_frac, SineRainfallParams* season,
- double a0_mean, double a0_var, std::vector<int> rel_sites, BoundaryType boundary, DispersalType disp_type, std::vector<Point> coords)
+ double a0_mean, double a0_var, const std::vector<int> &rel_sites, BoundaryType boundary, DispersalType disp_type, const std::vector<Point> &coords)
 {
 	num_pat = params->area->num_pat;
 	initial_pops = params->initial;
@@ -108,7 +108,7 @@ Model::Model(ModelParams* params, const std::array<std::array<std::array <double
  * @param[in] coords		site coordinates vector
  */
 Model::Model(ModelParams* params, const std::array<std::array<std::array <double, constants::num_gen>, constants::num_gen>, constants::num_gen> &inher_frac, InputRainfallParams *season,
- double a0_mean, double a0_var, std::vector<int> rel_sites, BoundaryType boundary, DispersalType disp_type, std::vector<Point> coords)
+ double a0_mean, double a0_var, const std::vector<int> &rel_sites, BoundaryType boundary, DispersalType disp_type, const std::vector<Point> &coords)
 {
 	num_pat = params->area->num_pat;
 	initial_pops = params->initial;
@@ -348,7 +348,7 @@ std::array<long long int, constants::num_gen> Model::calculate_tot_F_gen()
  * @details The patches within the vector are ordered according to order of creation. If specific coordinates have been set for patches, the sites vector will follow the same order as the coordinates vector of the Model constructor.
  * @return The sites vector, containing all Patch objects. 
  */
-std::vector<Patch*> Model::get_sites() const
+const std::vector<Patch*>& Model::get_sites() const
 {
 	return sites;
 }

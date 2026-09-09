@@ -95,7 +95,7 @@ void Patch::populate(int initial_WJ, int initial_WM, int initial_WV, int initial
  * @brief Returns the coordinates of the patch. 
  * @see Point
  */
-Point Patch::get_coords() const
+const Point& Patch::get_coords() const
 {
 	return coords;
 }
@@ -103,7 +103,7 @@ Point Patch::get_coords() const
 /**
  * @brief Returns the number of adult males in the patch, divided by genotype. 
  */
-std::array<long long int, constants::num_gen> Patch::get_M() const
+const std::array<long long int, constants::num_gen>& Patch::get_M() const
 {
 	return M;
 }
@@ -111,7 +111,7 @@ std::array<long long int, constants::num_gen> Patch::get_M() const
 /**
  * @brief Returns the number of adult mated females in the patch, divided by female genotype and male sperm genotype.
  */
-std::array<std::array<long long int, constants::num_gen>, constants::num_gen> Patch::get_F() const
+const std::array<std::array<long long int, constants::num_gen>, constants::num_gen>& Patch::get_F() const
 {
 	return F;
 }
@@ -196,7 +196,6 @@ void Patch::M_disperse_out(const std::array<long long int, constants::num_gen> &
 	for (std::size_t i = 0; i < m_out.size(); ++i) {
 		M[i] -= m_out[i];
 	}
-	update_mate();
 }
 
 /**
@@ -220,7 +219,6 @@ void Patch::F_disperse_out(const std::array<std::array<long long int, constants:
 void Patch::M_disperse_in(int gen, long long int m_in) 
 {
 	M[gen] += m_in;
-	update_mate();
 }
 
 /**
@@ -267,7 +265,6 @@ void Patch::F_wake(const std::array<std::array<long long int, constants::num_gen
 void Patch::add_driver_M(int num_driver_M) 
 {
 	M[1] += num_driver_M;
-	update_mate();
 }
 
 /**
@@ -279,6 +276,10 @@ void Patch::juv_get_older()
 {
 	for (int i=0; i < constants::num_gen; ++i) {
 		for (int a=0; a < constants::max_dev; ++a) {
+			if (J[i][a+1] == 0) {
+				J[i][a] = 0;
+				continue;
+			}
 			// number of juveniles that survive aging by a day are placed into the new older age group	
 			J[i][a] = random_binomial(J[i][a+1], comp);
 		}
@@ -295,15 +296,21 @@ void Patch::adults_die()
 {
 	double mu_a = params->mu_a;
 	for (int i=0; i < constants::num_gen; ++i) {
-		long long int m = random_binomial(M[i], mu_a); // number of males that die
-		M[i] -= m;
+		if (M[i] > 0) {
+			long long int m = random_binomial(M[i], mu_a); // number of males that die
+			M[i] -= m;
+		}
 
-		long long int v = random_binomial(V[i], mu_a);
-		V[i] -= v;	
+		if (V[i] > 0) {
+			long long int v = random_binomial(V[i], mu_a);
+			V[i] -= v;
+		}
 
 		for (int j=0; j < constants::num_gen; ++j) {
-			long long int f = random_binomial(F[i][j], mu_a);
-			F[i][j] -= f;
+			if (F[i][j] > 0) {
+				long long int f = random_binomial(F[i][j], mu_a);
+				F[i][j] -= f;
+			}
 		}
 	}
 
@@ -317,11 +324,11 @@ void Patch::adults_die()
 void Patch::virgins_mate() 
 {
 	std::array<long long int, constants::num_gen> v;
-	std::vector<long long int> v_c;
+	std::array<long long int, constants::num_gen> v_c;
 	for (int i=0; i < constants::num_gen; ++i) {
 		v[i] = random_binomial(V[i], mate_rate); // how many V will mate
 		if (v[i] > 0) {
-			v_c = random_multinomial(v[i], M); // how many V with given genotype will carry each of the male genotypes
+			random_multinomial(v[i], M, v_c); // how many V with given genotype will carry each of the male genotypes
 			for (int j=0; j < constants::num_gen; j++) {
 				F[i][j] += v_c[j];
 			}
@@ -342,14 +349,20 @@ void Patch::virgins_mate()
 void Patch::lay_eggs(const std::array<std::array<std::array <double, constants::num_gen>, constants::num_gen>, constants::num_gen> &inher_fraction,
  const std::array<double, constants::max_dev+1> &dev_duration_probs)
 {
-	std::vector<long long int> j_new;
+	std::array<long long int, constants::max_dev+1> j_new;
 	for (int i=0; i < constants::num_gen; ++i) {
 		for (int j=0; j < constants::num_gen; ++j) {
+			if (F[i][j] == 0) {
+				continue;
+			}
 			for (int k=0; k < constants::num_gen; ++k) {
+				if (inher_fraction[i][j][k] == 0.0) {
+					continue;
+				}
 				double num = (params->theta) * F[i][j] * inher_fraction[i][j][k]; // expected number of eggs laid with k genotype
 				long long int eggs = random_poisson(num); // actual number of eggs laid sampled from random distribution
 
-				j_new = random_multinomial(eggs, dev_duration_probs); // number of eggs that start in each different age class (according to different juvenile development times)
+				random_multinomial(eggs, dev_duration_probs, j_new); // number of eggs that start in each different age class (according to different juvenile development times)
 				for (int t=0; t < constants::max_dev + 1; ++t) { // juveniles created with assigned remaining time to develop
 					J[k][t] += j_new[t];
 				}
@@ -392,10 +405,16 @@ void Patch::juv_eclose()
  */
 void Patch::update_comp()
 {
-	int d = model->get_day();
 	double alpha = model->get_alpha(alpha0);
 	long long int tot_J = calculate_tot_J();
-	comp = (1 - (params->mu_j)) * std::pow(alpha / (alpha + tot_J), params->comp_power);
+	double density_term = alpha / (alpha + tot_J);
+	const long double survival_factor = static_cast<long double>(1 - (params->mu_j));
+	if (params->comp_power == 1.0) {
+		comp = survival_factor * static_cast<long double>(density_term);
+	}
+	else {
+		comp = survival_factor * static_cast<long double>(std::pow(density_term, params->comp_power));
+	}
 }
 
 /**
